@@ -1,80 +1,79 @@
 import React from 'react';
-import { connect } from 'react-redux';
+import {connect} from 'react-redux';
 import Card from './Card';
 import Genres from './Genres';
-import { getMovies } from '../thunks';
-import { setMovies } from '../actions';
+import {getGenres, getMovies} from '../thunks';
+import { setHearted} from '../actions';
+import {getGenresMovies} from "../thunks";
 
 class App extends React.Component {
-  constructor(props) {
-    super(props);
+    constructor(props) {
+        super(props);
 
-    this.state = {
-      hearted: [],
+        props.onGetMovies();
+        props.onGetGenres();
+    }
+
+    addHeart = (id) => {
+        const {hearted} = this.props;
+        this.props.onSetHearted([...hearted, id]);
     };
 
-    props.onGetMovies();
-  }
+    removeHeart = (id) => {
+        let {hearted} = this.props;
+        let index = hearted.indexOf(id);
 
-  setMovieList = (movieList) => {
-    this.setState({
-      movieList,
-    })
-  };
+        if (index > -1) {
+            hearted.splice(index, 1);
+        }
 
-  addHeart = (id) => {
-    const { hearted } = this.state;
+        this.props.onSetHearted([...hearted]);
+    };
+    render() {
+        const {movieList} = this.props;
+        const {genreList} = this.props;
+        let {hearted} = this.props;
 
-    this.setState({
-      hearted: [ ...hearted, id ],
-    })
-  };
-
-  removeHeart = (id) => {
-    const { hearted } = this.state;
-
-    this.setState({
-      hearted: hearted.filter((currentId) => currentId !== id),
-    })
-  };
-
-  render() {
-    const { movieList } = this.props;
-    const { hearted } = this.state;
-
-    return (
-      <React.Fragment>
-        <Genres onChangeList={this.setMovieList} />
+        return (
+            <React.Fragment>
+            <Genres genreList={genreList} loadGenre={this.loadGenre} onGetGenres={(id) => {
+            this.props.onGetGenresMovies(id)
+        }} onChangeList={this.setMovieList}/>
 
         <div className="cards">
-          {movieList.map((movie) => (
-            <Card
-              key={movie.id}
-              isHearted={hearted.includes(movie.id)}
-              onAddHeart={() => this.addHeart(movie.id)}
-              onRemoveHeart={() => this.removeHeart(movie.id)}
-              movie={movie}
-            />
-          ))}
-        </div>
-      </React.Fragment>
+            {movieList.map((movie) => (
+                <Card
+        key={movie.id}
+        isHearted={hearted.includes(movie.id)}
+        onAddHeart={() => this.addHeart(movie.id)}
+        onRemoveHeart={() => this.removeHeart(movie.id)}
+        movie={movie}
+        />
+    ))}
+    </div>
+        </React.Fragment>
     );
-  }
+    }
 }
 
 export default connect(
-  // function to get data from redux store to this components props
-  (state) => {
-    return {
-      movieList: state.movies.list,
-    };
-  },
-  // function to pass action callers to this components props
-  (dispatch) => {
-    return {
-      // onSetMovies - simplest way to pass data to store
-      onSetMovies: (movies) => dispatch(setMovies(movies)),
-      onGetMovies: () => dispatch(getMovies()),
-    };
-  },
+
+    (state) => {
+        return {
+            movieList: state.movies.list,
+            genreList: state.genres.list,
+            hearted: state.hearted.list,
+            logs: state.logs.list,
+        };
+    },
+
+    (dispatch) => {
+        return {
+            onGetMovies: () => dispatch(getMovies()),
+            onGetGenres: () => dispatch(getGenres()),
+            onGetGenresMovies: (id) => dispatch(getGenresMovies(id)),
+            onSetHearted: (hearted) => dispatch(setHearted(hearted)),
+
+        };
+    },
 )(App);
